@@ -1,0 +1,24 @@
+{
+  "generated_at": "2026-05-14 10:15:29",
+  "ansys_found": true,
+  "ansys_root": "E:\\ANSYS\\2024 R1",
+  "detected_versions": [
+    "v241"
+  ],
+  "selected_version": "v241",
+  "mapdl_path": "E:\\ANSYS\\2024 R1\\v241\\aisol\\Bin\\winx64\\ansys.exe",
+  "workbench_path": "E:\\ANSYS\\2024 R1\\v241\\aisol\\Bin\\winx64\\AnsysWBU.exe",
+  "mechanical_path": "E:\\ANSYS\\2024 R1\\v241\\aisol\\Bin\\winx64\\AnsysWBU.exe",
+  "fluent_path": null,
+  "license_tool_path": null,
+  "pyansys_available": false,
+  "pyansys_packages": [],
+  "preferred_backend": "workbench",
+  "warnings": [],
+  "note": "此文件由 modules/ansys_environment.py 自动生成。如 ANSYS 未检测到或路径有误，请手动编辑。",
+  "backend_usage": {
+    "pymapdl": "静力结构分析 / 模态分析（Python API, PyMAPDL）",
+    "workbench": "Workbench Mechanical（GUI 或批处理）",
+    "fluent": "暂不启用，待 CFD 流程就绪后扩展"
+  }
+}

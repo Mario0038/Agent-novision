@@ -1,0 +1,42 @@
+{
+  "geometry": {
+    "span_mm": 1200,
+    "root_chord_mm": 220,
+    "tip_chord_mm": 130,
+    "thickness_mm": 20
+  },
+  "cad": {
+    "solver": "solidworks",
+    "build_mode": "simple_trapezoid",
+    "output_name": "cad_fea_wing_demo"
+  },
+  "fea": {
+    "solver": "ansys_mechanical",
+    "analysis_type": "static_structural",
+    "material": "Aluminum 6061-T6",
+    "mesh": {
+      "element_size_mm": 5.0,
+      "element_type": "tet10"
+    },
+    "boundary_conditions": [
+      {
+        "type": "fixed_support",
+        "region": "root"
+      }
+    ],
+    "loads": [
+      {
+        "type": "force",
+        "value_N": 300,
+        "direction": "+Z",
+        "region": "tip"
+      }
+    ],
+    "result_items": [
+      "total_deformation",
+      "equivalent_stress",
+      "equivalent_strain"
+    ]
+  },
+  "note": "FEA 求解器适配器尚未实现。此文件为任务定义模板，供后续 ANSYS Mechanical APDL/PyMAPDL 适配器使用。"
+}

@@ -1,0 +1,10 @@
+openai
+python-dotenv
+pandas
+tqdm
+pydantic
+tenacity
+Pillow
+PyMuPDF
+python-docx
+pywin32

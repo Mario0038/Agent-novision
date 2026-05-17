@@ -1,0 +1,15 @@
+{
+  "build_mode": "loft_airfoil",
+  "span_mm": 1200,
+  "root_chord_mm": 220,
+  "tip_chord_mm": 130,
+  "thickness_mm": 20,
+  "sweep_deg": 0,
+  "dihedral_deg": 0,
+  "twist_root_deg": 0,
+  "twist_tip_deg": 0,
+  "airfoil_name": "NACA2412/NACA0012",
+  "root_airfoil": "NACA2412",
+  "tip_airfoil": "NACA0012",
+  "output_name": "test_wing_loft"
+}
