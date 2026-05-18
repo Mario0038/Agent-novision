@@ -9,7 +9,6 @@
 2. 长期记忆与候选记忆系统；
 3. 知识库文献管理系统（支持 PDF/Word/Markdown 入库与检索）；
 4. SolidWorks 自动化连接与基础建模测试脚本；
-5. 千问/Qwen 视觉模型识图模块。
 
 ---
 
@@ -524,101 +523,10 @@ examples/wing_params.json
 - 不要自动运行 SolidWorks 建模
 - 只有用户明确确认后才运行 `python scripts/create_wing_model.py`
 
----
-
-## 8. 识图模块维护规则
-
-当前项目已经新增千问/Qwen 识图模块。  
-该模块参考了 GitHub 项目 `asuojun/claude-vision-skill` 中 `vision.js` 的实现思路，但当前项目主体是 Python，因此不直接运行 `vision.js`，而是使用 Python 版识图模块。
-
-当前千问/Qwen 识图模块已经接入 `domain_agent.py`。
-
-相关文件：
-
-```text
-modules/vision_client.py
-scripts/vision_image.py
-scripts/check_vision.py
-examples/vision_test/
-reference/qwen_vision_demo/vision.js
-domain_agent.py
-```
-
-当前支持三种方式：
-
-```text
-/vision image=examples/vision_test/test3.jpg prompt=请分析这张图片
-/vision examples/vision_test/test3.jpg 请分析这张图片
-请分析 examples/vision_test/test3.jpg 这张图片
-```
-
-维护原则：
-
-1. 保留 `/vision` 显式命令；
-2. 保留自然语言图片路径自动识别；
-3. 只有同时检测到图片路径和分析意图时，才自动调用视觉 API；
-4. 如果只检测到图片路径但没有分析意图，不调用 API，只提示用户；
-5. 识图结果可以保存到会话记录；
-6. 图片 base64 不得保存到会话记录；
-7. 不要将识图请求继续送入普通 DeepSeek 对话分支；
-8. 不要自动运行真实识图测试。
 
 ---
 
-### 8.1 识图模块文件
-
-识图模块相关文件包括：
-
-```text
-modules/vision_client.py
-scripts/vision_image.py
-scripts/check_vision.py
-examples/vision_test/
-reference/qwen_vision_demo/vision.js
-```
-
-文件作用：
-
-```text
-modules/vision_client.py
-    Python 版识图核心模块，负责图片读取、格式检查、base64 data URL 转换和视觉模型调用。
-
-scripts/vision_image.py
-    独立命令行识图测试入口。
-
-scripts/check_vision.py
-    视觉 API 配置检查脚本，不实际调用 API。
-
-examples/vision_test/
-    用户手动放置测试图片的目录。
-
-reference/qwen_vision_demo/vision.js
-    GitHub 原项目中的参考文件，不作为当前 Python 项目的运行入口。
-```
-
----
-
-### 8.2 视觉模型配置
-
-视觉模型配置位于 `.env`，变量名如下：
-
-```env
-VISION_API_KEY=用户手动填写
-VISION_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
-VISION_MODEL=qwen3.5-omni-plus
-```
-
-维护规则：
-
-- 不要读取、打印或修改 `.env` 中的真实 API Key；
-- 不要把 `VISION_API_KEY` 写死进任何代码；
-- 不要在日志、终端输出、README 或注释中暴露真实 API Key；
-- 可以检查变量是否存在，但不能输出变量值；
-- 不要删除原有 DeepSeek 配置。
-
----
-
-### 8.3 图片路径解析规则
+### 8.1 图片路径解析规则
 
 `domain_agent.py` 中的图片路径应统一按项目根目录解析。
 
@@ -641,7 +549,7 @@ E:\BIT\Agent-MVP\Claude code\examples\vision_test\test3.jpg
 
 ---
 
-### 8.4 允许操作
+### 8.2 允许操作
 
 在用户明确要求下，可以执行：
 
@@ -662,30 +570,8 @@ python -m py_compile domain_agent.py
 
 ---
 
-### 8.5 真实识图测试
 
-真实识图测试命令：
-
-```bash
-python scripts/vision_image.py --image examples/vision_test/test3.jpg --prompt "请分析这张图片"
-```
-
-Agent 内真实识图测试：
-
-```text
-请分析 examples/vision_test/test3.jpg 这张图片
-```
-
-注意：
-
-- 该命令会调用千问视觉 API；
-- 会消耗 API 额度；
-- 只有用户明确确认后才运行；
-- 不要自动运行真实识图测试。
-
----
-
-### 8.6 禁止操作
+### 8.3 禁止操作
 
 除非用户明确要求，否则不要执行以下操作：
 
@@ -706,100 +592,9 @@ Agent 内真实识图测试：
 
 ---
 
-### 8.7 识图功能适用范围
 
-允许用于：
 
-```text
-普通图片分析
-工程图分析
-仿真图分析
-软件界面截图分析
-图表分析
-论文或报告图片解释
-实验结果截图分析
-```
-
-禁止用于：
-
-```text
-具体武器结构识别
-战斗部结构分析
-制导部件识别
-发动机结构分析
-发射机构分析
-实战部署图像分析
-可直接用于武器实现、攻击、优化或部署的图像分析
-```
-
-如遇敏感图像请求，应转为高层次、非操作性的系统工程或方法论说明。
-
----
-
-### 8.8 识图模块当前运行方式
-
-配置检查：
-
-```bash
-python scripts/check_vision.py
-```
-
-独立识图测试：
-
-```bash
-python scripts/vision_image.py --image examples/vision_test/test3.jpg --prompt "请分析这张图片"
-```
-
-Agent 内显式识图：
-
-```text
-/vision image=examples/vision_test/test3.jpg prompt=请分析这张图片
-```
-
-Agent 内自然语言识图：
-
-```text
-请分析 examples/vision_test/test3.jpg 这张图片
-```
-
-测试图片目录：
-
-```text
-examples/vision_test/
-```
-
-视觉模型：
-
-```text
-qwen3.5-omni-plus
-```
-
-视觉接口：
-
-```text
-https://dashscope.aliyuncs.com/compatible-mode/v1
-```
-
----
-
-### 8.9 识图模块维护原则
-
-Claude Code 在维护识图模块时应遵守：
-
-1. 先检查，再修改；
-2. 不碰 `.env` 中的真实 Key；
-3. 不自动运行真实 API 调用；
-4. 不让 JS 参考文件影响 Python 主程序；
-5. 保留 `/vision` 显式命令；
-6. 保留自然语言图片路径自动识别；
-7. 只有同时检测到图片路径和分析意图时才调用视觉 API；
-8. 如果只检测到图片路径但无分析意图，不调用 API；
-9. 不把图片 base64 写入会话记录；
-10. 不破坏现有 Agent、记忆系统和 SolidWorks 自动化功能。
-
----
-
-### 8.10 文献入库与检索模块
+### 8.4 文献入库与检索模块
 
 文献管理脚本（已实现）：
 
@@ -890,12 +685,6 @@ python scripts/check_environment.py
 python scripts/check_deepseek.py
 ```
 
-### 检查视觉 API 配置
-
-```bash
-python scripts/check_vision.py
-```
-
 ### 测试 SolidWorks 连接
 
 ```bash
@@ -906,18 +695,6 @@ python scripts/test_solidworks_connection.py
 
 ```bash
 python scripts/run_create_plate.py
-```
-
-### 独立识图测试
-
-```bash
-python scripts/vision_image.py --image examples/vision_test/test3.jpg --prompt "请分析这张图片"
-```
-
-### Agent 内识图测试
-
-```text
-请分析 examples/vision_test/test3.jpg 这张图片
 ```
 
 ### 文献入库
@@ -1044,9 +821,6 @@ generated_models/
 SolidWorks COM 连接已通过
 基础带孔矩形板建模已跑通
 梯形机翼参数化建模模板已创建（待运行）
-千问/Qwen 识图独立模块已跑通
-/vision 命令已接入 domain_agent.py
-自然语言图片路径自动识别已接入 domain_agent.py
 SolidWorks 尚未完全接入 domain_agent.py
 文献入库与检索脚本待开发
 ```
@@ -1100,11 +874,10 @@ python scripts/vision_image.py --image examples/vision_test/test3.jpg --prompt "
 7. 不破坏 `/vision` 和自然语言识图功能；
 8. 不破坏知识库目录结构；
 9. SolidWorks 文件统一放入 `generated_models/`；
-10. 识图参考 JS 文件只保存在 `reference/qwen_vision_demo/`；
-11. 原始文献只放入 `knowledge_base/raw_docs/`，不放 memory/ 或 domain_docs/；
-12. 修改代码后做语法检查；
-13. 不运行训练脚本；
-14. 不自动调用真实 API；
-15. 不执行敏感武器设计；
-16. 不进行敏感武器图像分析；
-17. 对不确定的操作先说明，再等待用户确认。
+10. 原始文献只放入 `knowledge_base/raw_docs/`，不放 memory/ 或 domain_docs/；
+11. 修改代码后做语法检查；
+12. 不运行训练脚本；
+13. 不自动调用真实 API；
+14. 不执行敏感武器设计；
+15. 不进行敏感武器图像分析；
+16. 对不确定的操作先说明，再等待用户确认。
