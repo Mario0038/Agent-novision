@@ -7,7 +7,7 @@ Copyright (c) 2026 Mario. All rights reserved.
 This project was originally created by Mario as a command-line interactive
 professional analysis and writing assistant based on Python, DeepSeek V4 Pro
 API integration, local knowledge management, long-term memory, SolidWorks
-automation support, and Qwen vision model support.
+automation support.
 
 The copyright notice, author attribution, and this NOTICE file should be
 preserved in redistributed, transferred, or derivative copies of the project
