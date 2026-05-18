@@ -11,7 +11,6 @@
   记忆写入  /remember  /style  /workflow  /correction  /focus
   自动学习  /autolearn on|off|status
   记忆管理  /candidates  /acceptmem  /rejectmem  /forget
-  识图      /vision image=<path> prompt=<text>
   文献      /docs  /kbtopics  /searchdocs 关键词  /askdocs 问题
   设计      /design_task 设计需求
   系统      /memory  /reload  /help
@@ -629,11 +628,6 @@ def print_help():
   │    /rejectmem          拒绝所有 pending 候选               │
   │    /forget keyword     搜索正式记忆中包含关键字的条目        │
   ├──────────────────────────────────────────────────────────┤
-  │  识图                                                     │
-  │    /vision image=路径 prompt=提示词                         │
-  │    /vision 图片路径 提示词                                  │
-  │    自然语言（含图片路径+分析意图时自动触发）                  │
-  │    例如：请分析 examples/vision_test/test.png 这张图片       │
   ├──────────────────────────────────────────────────────────┤
   │  文献检索                                                   │
   │    /docs                 列出已入库文献                      │
@@ -654,114 +648,6 @@ def print_help():
   默认：自动学习 = off，退出时生成候选但不自动写入正式记忆。
   只有 /acceptmem 或开启 /autolearn on 才会写入正式记忆。
 """)
-
-
-def is_slash_command(s: str) -> bool:
-    return s.startswith("/")
-
-
-def _parse_vision_args(arg: str):
-    """解析 /vision 命令参数。
-
-    支持格式:
-        image=path/to/img.png prompt=请分析
-        或位置参数: path/to/img.png 请分析这张图片
-
-    Returns:
-        (image_path: str | None, prompt: str | None)
-    """
-    image_path = None
-    prompt = None
-
-    # 尝试 key=value 格式
-    img_match = re.search(r"image=(.+?)(?:\s+prompt=|\s*$)", arg)
-    prompt_match = re.search(r"prompt=(.+)", arg)
-
-    if img_match:
-        image_path = img_match.group(1).strip()
-        # 去除可能的引号
-        image_path = image_path.strip("\"'")
-    if prompt_match:
-        prompt = prompt_match.group(1).strip()
-        prompt = prompt.strip("\"'")
-
-    # 如果 key=value 没匹配到 image，尝试位置参数
-    if not image_path and arg:
-        parts = arg.split(maxsplit=1)
-        image_path = parts[0].strip()
-        if len(parts) > 1:
-            prompt = parts[1].strip() if not prompt else prompt
-
-    return image_path, prompt
-
-
-# ═══════════════════════════════════════════════════════════
-# 自然语言图片路径自动识别
-# ═══════════════════════════════════════════════════════════
-_IMAGE_EXTS = r"\.(?:png|jpg|jpeg|webp)"
-
-# 需要从识别出的路径首尾剥离的包装字符
-_PATH_WRAPPERS = '`"\'""'' \t,，。、；;:：.!?*)]}）'
-
-_INTENT_KW = re.compile(
-    r"分析|识别|看看|帮我看看|帮我看|这张图|图片|截图|"
-    r"云图|工程图|图中|什么问题|什么原因|描述|说明"
-)
-
-
-def detect_image_request(user_input: str):
-    """从自然语言输入中检测图片分析请求。
-
-    Returns:
-        (image_path, prompt, auto_call)
-        - auto_call=True:  检测到图片路径且有分析意图，应自动调用识图
-        - auto_call=False: 检测到图片路径但无分析意图，仅提示
-        - image_path 为 None: 未检测到图片路径
-    """
-    image_path = None
-    raw_path = None
-
-    # Step 1: 尝试匹配各类引号包裹的路径（可含空格）
-    quote_pairs = [
-        ('"', '"'), ("'", "'"), ("`", "`"),
-        ("“", "”"),  # 中文双引号 " "
-        ("‘", "’"),  # 中文单引号 ' '
-    ]
-    for left, right in quote_pairs:
-        pat = re.escape(left) + r"(.+?" + _IMAGE_EXTS + r")" + re.escape(right)
-        m = re.search(pat, user_input, re.IGNORECASE)
-        if m:
-            image_path = m.group(1)
-            raw_path = left + m.group(1) + right  # 含引号的完整片段
-            break
-
-    # Step 2: 回退到无空格/无引号路径
-    if not image_path:
-        m = re.search(rf"(\S+{_IMAGE_EXTS})", user_input, re.IGNORECASE)
-        if m:
-            raw_path = m.group(1)
-            image_path = raw_path
-
-    if not image_path:
-        return None, None, False
-
-    # Step 3: 剥离首尾包装字符
-    image_path = image_path.strip(_PATH_WRAPPERS)
-    if not image_path:
-        return None, None, False
-
-    # Step 4: 检查分析意图
-    has_intent = bool(_INTENT_KW.search(user_input))
-
-    # Step 5: 从用户输入中移除路径片段，剩余作为 prompt
-    escaped_raw = re.escape(raw_path)
-    remaining = re.sub(rf"\s*{escaped_raw}\s*", " ", user_input, count=1).strip()
-
-    if has_intent:
-        prompt = remaining if remaining else None
-        return image_path, prompt, True
-    else:
-        return image_path, None, False
 
 
 # ═══════════════════════════════════════════════════════════
@@ -1244,32 +1130,6 @@ def main():
                 round_count += 1
                 continue
 
-            # /vision — 千问视觉模型识图
-            if cmd == "/vision":
-                image_path, prompt = _parse_vision_args(arg)
-                if not image_path:
-                    print("  ⚠️  用法：/vision image=<path> prompt=<text>")
-                    print("         /vision <图片路径> <提示词>")
-                    continue
-                if not Path(image_path).exists():
-                    print(f"  ❌ 图片文件不存在: {image_path}")
-                    continue
-                print("  🔍 正在分析图片...", end="", flush=True)
-                vision_result = analyze_image(image_path, prompt)
-                print(f"\r{' ' * 20}\r", end="")
-                print(f"\n  📷 识图结果:\n")
-                print(vision_result)
-                print("-" * 45)
-                # 将识图结果保存到会话（不保存 base64）
-                session_user_msg = f"/vision image={image_path}"
-                if prompt:
-                    session_user_msg += f" prompt={prompt}"
-                messages.append({"role": "user", "content": session_user_msg})
-                messages.append({"role": "assistant", "content": vision_result})
-                messages = trim_history(messages)
-                round_count += 1
-                continue
-
             # 手动记忆命令
             if cmd in MANUAL_COMMANDS:
                 if not arg:
@@ -1289,34 +1149,6 @@ def main():
                 continue
 
             print(f"  ⚠️  未知命令：{cmd}（输入 /help 查看命令列表）")
-            continue
-
-        # ── 自然语言图片识别 ──────────────────────────
-        img_path, img_prompt, auto_call = detect_image_request(user_input)
-
-        if img_path and auto_call:
-            # 解析绝对/相对路径
-            img_full_path = Path(img_path)
-            if not img_full_path.is_absolute():
-                img_full_path = Path.cwd() / img_path
-            if not img_full_path.exists():
-                print(f"  ❌ 图片文件不存在: {img_path}")
-                continue
-
-            print("  🔍 正在分析图片...", end="", flush=True)
-            vision_result = analyze_image(str(img_full_path), img_prompt)
-            print(f"\r{' ' * 20}\r", end="")
-            print(f"\n  📷 识图结果:\n")
-            print(vision_result)
-            print("-" * 45)
-            messages.append({"role": "user", "content": user_input})
-            messages.append({"role": "assistant", "content": vision_result})
-            messages = trim_history(messages)
-            round_count += 1
-            continue
-
-        if img_path and not auto_call:
-            print(f'  💡 检测到图片路径，如需分析图片，请输入「请分析 {img_path}」')
             continue
 
         # ── 自动路由 ──────────────────────────────────
