@@ -27,9 +27,8 @@ docs/operation_guide.md
 5. 自然语言自动判断是否需要检索知识库，并结合 DeepSeek 回答。
 6. `/searchdocs` 本地检索和 `/askdocs` 强制知识库问答。
 7. `/kbtopics` 查看知识库主题分布和安全标签统计。
-8. 千问/Qwen 视觉模型识图入口。
-9. SolidWorks 通用机械零件建模测试脚本。
-10. ANSYS/FEA 任务包与环境检查脚本。
+8. SolidWorks 通用机械零件建模测试脚本。
+9. ANSYS/FEA 任务包与环境检查脚本。
 
 本项目不用于具体武器实现、敏感结构设计、战斗部、制导部件、发动机结构、发射机构或实战部署相关内容。遇到敏感请求时，Agent 应转为高层次、非操作性的系统工程或方法论说明。
 
@@ -123,20 +122,6 @@ quit
 /autolearn off
 ```
 
-### 识图
-
-```text
-/vision image=examples/vision_test/test3.jpg prompt=请分析这张图片
-/vision examples/vision_test/test3.jpg 请分析这张图片
-```
-
-也支持自然语言图片路径识别：
-
-```text
-请分析 examples/vision_test/test3.jpg 这张图片
-```
-
-识图会调用千问/Qwen 视觉 API。`scripts/check_vision.py` 只检查配置是否存在，不实际调用 API。图片 base64 不会写入 `sessions/`。
 
 ## 知识库状态
 
@@ -356,34 +341,6 @@ python scripts/test_fea_task_package.py
 - dry-run 测试不应直接执行真实仿真。
 - 真实复杂仿真需要用户明确确认。
 
-## 视觉模块
-
-配置检查：
-
-```bash
-python scripts/check_vision.py
-```
-
-独立识图：
-
-```bash
-python scripts/vision_image.py --image examples/vision_test/test3.jpg --prompt "请分析这张图片"
-```
-
-Agent 内识图：
-
-```text
-/vision image=examples/vision_test/test3.jpg prompt=请分析这张图片
-```
-
-支持图片格式：
-
-```text
-.png
-.jpg
-.jpeg
-.webp
-```
 
 ## 安全与维护规则
 
@@ -417,12 +374,6 @@ python scripts/refine_kb_metadata.py
 python scripts/search_docs.py "关键词"
 ```
 
-需要识图时：
-
-```bash
-python scripts/check_vision.py
-python domain_agent.py
-```
 
 需要建模前：
 
